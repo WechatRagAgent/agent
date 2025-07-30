@@ -1,0 +1,61 @@
+# Docker环境专用配置
+spring:
+  data:
+    redis:
+      host: ${SPRING_DATA_REDIS_HOST:redis}
+      port: ${SPRING_DATA_REDIS_PORT:6379}
+      timeout: 2000ms
+      lettuce:
+        pool:
+          max-active: 20
+          max-idle: 10
+          min-idle: 5
+          max-wait: 2000ms
+
+# 外部服务配置
+wechat:
+  chatlog:
+    base-url: ${WECHAT_CHATLOG_BASE_URL:http://host.docker.internal:5030}
+
+rag:
+  parse-model:
+    api-key: ${RAG_PARSE_MODEL_API_KEY}
+    model: ${RAG_PARSE_MODEL_NAME:google/gemini-2.5-flash}
+  embedding:
+    provider: ${RAG_EMBEDDING_PROVIDER:siliconflow}
+    model: ${RAG_EMBEDDING_MODEL:BAAI/bge-m3}
+    api-key: ${RAG_EMBEDDING_API_KEY}
+    base-url: ${RAG_EMBEDDING_BASE_URL:https://api.siliconflow.cn/v1}
+  rerank:
+    provider: ${RAG_RERANK_PROVIDER:siliconflow}
+    model: ${RAG_RERANK_MODEL:BAAI/bge-reranker-v2-m3}
+    api-key: ${RAG_RERANK_API_KEY}
+    base-url: ${RAG_RERANK_BASE_URL:https://api.siliconflow.cn/v1}
+  vector-store:
+    provider: ${RAG_VECTOR_STORE_PROVIDER:elasticsearch}
+    url: ${RAG_VECTOR_STORE_URL:http://elasticsearch:9200}
+    collection-name: ${RAG_VECTOR_STORE_COLLECTION:wechat_chatlog}
+
+# Docker环境的健康检查配置
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: always
+      show-components: always
+  health:
+    # Docker环境中外部服务可能不可用，禁用相关健康检查
+    redis:
+      enabled: false
+    elasticsearch:
+      enabled: false
+    db:
+      enabled: false
+    # 只保留基本的健康检查
+    ping:
+      enabled: true
+    diskspace:
+      enabled: true

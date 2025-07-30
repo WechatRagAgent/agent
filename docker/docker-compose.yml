@@ -1,0 +1,97 @@
+services:
+  elasticsearch:
+    image: elasticsearch:8.18.1
+    container_name: elasticsearch
+    environment:
+      - node.name=es-node
+      - cluster.name=es-cluster
+      - discovery.type=single-node
+      - bootstrap.memory_lock=true
+      - xpack.security.enabled=false
+      - xpack.security.http.ssl.enabled=false
+      - "ES_JAVA_OPTS=-Xms1g -Xmx1g"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    volumes:
+      - es_data:/usr/share/elasticsearch/data
+    networks:
+      - wechat-rag
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:9200/_cluster/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 40s
+  kibana:
+    image: kibana:8.18.1
+    container_name: kibana
+    depends_on:
+      - elasticsearch
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+      - ELASTICSEARCH_USERNAME=kibana_system
+      - ELASTICSEARCH_PASSWORD=
+      - XPACK_SECURITY_ENABLED=false
+    ports:
+      - "5601:5601"
+    networks:
+      - wechat-rag
+  redis:
+    image: redis:7.2-alpine
+    container_name: redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - wechat-rag
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+
+  agent-web:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    container_name: agent-web
+    ports:
+      - "8080:8080"
+    env_file:
+      - .env
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_DATA_REDIS_HOST=redis
+      - RAG_VECTOR_STORE_URL=http://elasticsearch:9200
+      - WECHAT_CHATLOG_BASE_URL=http://host.docker.internal:5030
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - wechat-rag
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/actuator/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+volumes:
+  es_data:
+    driver: local
+  redis_data:
+    driver: local
+
+networks:
+  wechat-rag:
+    driver: bridge

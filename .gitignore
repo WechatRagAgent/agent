@@ -1,0 +1,9 @@
+# IntelliJ project files
+.idea
+*.iml
+out
+gen
+**/target/**
+/.claude/settings.local.json
+/agent-datasync/.claude/settings.local.json
+/docker/.env

@@ -1,0 +1,48 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: wechat-rag-agent
+  data:
+    redis:
+      host: localhost
+      port: 6379
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: always
+      show-components: always
+  health:
+    redis:
+      enabled: true
+    elasticsearch:
+      enabled: true
+
+wechat:
+  chatlog:
+    base-url: http://127.0.0.1:5030
+
+rag:
+  parse-model:
+    api-key: your-openrouter-api-key-here
+    model: google/gemini-2.5-flash
+  embedding:
+    provider: siliconflow
+    model: BAAI/bge-m3
+    api-key: your-siliconflow-api-key-here
+    base-url: https://api.siliconflow.cn/v1
+  rerank:
+    provider: siliconflow
+    model: BAAI/bge-reranker-v2-m3
+    api-key: your-siliconflow-api-key-here
+    base-url: https://api.siliconflow.cn/v1
+  vector-store:
+    provider: elasticsearch
+    url: http://localhost:9200
+    collection-name: wechat_chatlog

@@ -1,0 +1,73 @@
+# Git files
+.git
+.gitignore
+.gitattributes
+
+# IDE files
+.idea/
+.vscode/
+*.iml
+*.iws
+*.ipr
+.project
+.classpath
+.settings/
+
+# Build output
+target/
+build/
+out/
+*.jar
+*.war
+*.ear
+
+# Logs
+logs/
+*.log
+*.log.*
+
+# Documentation
+*.md
+docs/
+README*
+CHANGELOG*
+
+# Docker files (prevent recursive copy)
+Dockerfile*
+docker-compose*.yml
+.dockerignore
+
+# CI/CD files
+.github/
+.gitlab-ci.yml
+.travis.yml
+Jenkinsfile
+
+# Temporary files
+*.tmp
+*.temp
+*~
+.DS_Store
+Thumbs.db
+
+# Environment files (sensitive data)
+.env
+.env.*
+!.env.example
+
+# Test files and coverage reports
+**/test-results/
+**/coverage/
+**/.nyc_output/
+
+# Node.js (if any frontend assets)
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# Maven wrapper (already in image)
+.mvn/wrapper/maven-wrapper.jar
+
+# Local development files
+.local/
+.cache/
