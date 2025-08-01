@@ -4,7 +4,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.ReactiveRedisTemplate;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 
@@ -21,9 +20,6 @@ public class AutoSyncService {
 
     @Autowired
     private ReactiveRedisTemplate<String, Object> redisTemplate;
-
-    @Autowired
-    private IncrementalSyncService incrementalSyncService;
 
     /**
      * 获取自动同步配置
@@ -76,31 +72,15 @@ public class AutoSyncService {
                 });
     }
 
-    /**
-     * 定时执行自动增量同步
-     * 每10分钟执行一次
-     */
-    @Scheduled(fixedRate = 600000) // 10分钟 = 600000毫秒
-    public void autoIncrementalSync() {
-        log.info("开始执行自动增量同步任务");
+    public Mono<Void> removeFromAutoSync(String talker) {
+        if (StringUtils.isEmpty(talker)) {
+            log.error("移除自动同步配置失败，聊天对象不能为空");
+            return Mono.error(new IllegalArgumentException("聊天对象不能为空"));
+        }
 
-        getAutoSyncConfig()
-                .flatMapIterable(talkers -> talkers)
-                .flatMap(talker -> {
-                    log.info("正在为聊天对象 {} 执行增量同步", talker);
-                    return incrementalSyncService.syncIncremental(talker)
-                            .doOnSuccess(v -> log.info("聊天对象 {} 增量同步完成", talker))
-                            .doOnError(error -> log.error("聊天对象 {} 增量同步失败: {}", talker, error.getMessage()))
-                            .onErrorResume(error -> {
-                                // 单个聊天对象同步失败不影响其他对象的同步
-                                log.warn("跳过聊天对象 {} 的同步，继续处理下一个", talker);
-                                return Mono.empty();
-                            });
-                })
-                .then()
-                .doOnSuccess(v -> log.info("自动增量同步任务执行完成"))
-                .doOnError(error -> log.error("自动增量同步任务执行失败", error))
-                .subscribe();
+        // 从列表中移除
+        return redisTemplate.opsForList()
+                .remove(AUTO_SYNC_CONFIG_KEY, 1, talker)
+                .then();
     }
-
 }

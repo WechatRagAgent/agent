@@ -5,13 +5,15 @@ import dev.langchain4j.data.segment.TextSegment;
 import dev.langchain4j.store.embedding.EmbeddingStore;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ObjectUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
-import java.util.Objects;
+
+import static dev.langchain4j.store.embedding.filter.MetadataFilterBuilder.metadataKey;
 
 /**
  * Vector Store服务类
@@ -67,5 +69,19 @@ public class VectorStoreService {
                     return Mono.error(new RuntimeException("添加文档列表失败", e));
                 })
                 .flatMapMany(Flux::fromIterable);
+    }
+
+    /**
+     * 根据向量数据库中的元数据talker字段相关的文档
+     *
+     * @param talker 聊天者标识
+     */
+    public Mono<Void> deleteByTalker(String talker) {
+        if (StringUtils.isEmpty(talker)) {
+            return Mono.error(new IllegalArgumentException("Talker不能为空"));
+        }
+        embeddingStore.removeAll(metadataKey("talker").isEqualTo(talker));
+        log.info("已删除与Talker={}相关的所有文档", talker);
+        return Mono.empty();
     }
 }

@@ -63,6 +63,9 @@ public class ChatlogVectorService {
     @Autowired
     private RedisSyncStateService redisSyncStateService;
 
+    @Autowired
+    private AutoSyncService autoSyncService;
+
     /**
      * 获取已同步的聊天记录检查点
      *
@@ -73,6 +76,20 @@ public class ChatlogVectorService {
             return redisSyncStateService.getAllCheckpoints();
         }
         return Flux.from(redisSyncStateService.getCheckpoint(talker));
+    }
+
+    public Mono<Void> deleteSyncedChatlogs(String talker) {
+        if (StringUtils.isEmpty(talker)) {
+            return Mono.error(new IllegalArgumentException("Talker不能为空"));
+        }
+        return Mono.when(
+                // 删除向量数据库中的记录
+                vectorStoreService.deleteByTalker(talker),
+                // 删除Redis中的同步状态
+                redisSyncStateService.deleteTalker(talker),
+                // 从自动同步列表中移除
+                autoSyncService.removeFromAutoSync(talker)
+        );
     }
 
     /**
@@ -172,11 +189,16 @@ public class ChatlogVectorService {
                             })
                             // 收集TextSegment
                             .map(this::toTextSegment)
-                            .doOnNext(chatlog -> safeProgressCallback(progressCallback, ProgressStatus.PROCESSING, 60, totalCount, null))
                             .buffer(DEFAULT_BATCH_SIZE)
                             // 批量处理嵌入向量并存储
                             .flatMap(batch -> processEmbeddingBatch(batch, talker, checkpointCallback)
-                                    .doOnSuccess(processedCount::addAndGet))
+                                    .doOnSuccess(count -> {
+                                                int currentProcessed = processedCount.addAndGet(count);
+                                                // 进度从60%开始，处理完成时达到100%
+                                                int percentage = 60 + (int) ((double) currentProcessed / totalCount * 40);
+                                                safeProgressCallback(progressCallback, ProgressStatus.PROCESSING, percentage, totalCount, currentProcessed);
+                                            }
+                                    ))
                             .doOnError(e -> {
                                 log.error("向量化处理失败: talker={}, time={}", talker, time, e);
                                 safeProgressCallback(progressCallback, ProgressStatus.FAILED, 0, totalCount, null);

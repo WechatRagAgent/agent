@@ -58,6 +58,14 @@ public class VectorizationController {
                 .subscribeOn(Schedulers.boundedElastic());
     }
 
+    @DeleteMapping("/sync/{talker}")
+    public Mono<Void> deleteSyncedChatlogs(@PathVariable String talker) {
+        log.info("删除已同步的群信息: talker={}", talker);
+
+        // 删除指定的群聊同步记录
+        return chatlogVectorService.deleteSyncedChatlogs(talker);
+    }
+
     /**
      * SSE接口 - 执行向量化并实时推送进度
      *

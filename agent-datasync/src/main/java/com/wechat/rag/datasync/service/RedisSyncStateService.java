@@ -140,6 +140,20 @@ public class RedisSyncStateService {
                 .then();
     }
 
+    /**
+     * 删除指定talker的检查点和已处理seq缓存
+     *
+     * @param talker 聊天对象 wxid, 群id, 备注名, 昵称
+     * @return Mono<Long> 删除的键数量
+     */
+    public Mono<Long> deleteTalker(String talker) {
+        String checkpointKey = CHECKPOINT_KEY_PREFIX + talker;
+        String processedKey = PROCESSED_KEY_PREFIX + talker;
+
+        return redisTemplate.delete(checkpointKey)
+                .then(redisTemplate.delete(processedKey));
+    }
+
 
     // 辅助方法
     private Mono<SyncIncrementCheckpoint> mapToCheckpointMono(Map<String, String> map) {
