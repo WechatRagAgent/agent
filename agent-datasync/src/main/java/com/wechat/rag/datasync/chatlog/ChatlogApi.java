@@ -29,6 +29,11 @@ public class ChatlogApi {
         this.chatlogConfig = chatlogConfig;
         this.webClient = WebClient.builder()
                 .baseUrl(chatlogConfig.getBaseUrl())
+                .codecs(configurer -> configurer
+                        .defaultCodecs()
+                        // 设置最大内存大小为5MB
+                        .maxInMemorySize(5 * 1024 * 1024)
+                )
                 .build();
     }
 
