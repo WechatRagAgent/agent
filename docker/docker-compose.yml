@@ -10,6 +10,7 @@ services:
       - xpack.security.enabled=false
       - xpack.security.http.ssl.enabled=false
       - "ES_JAVA_OPTS=-Xms1g -Xmx1g"
+      - TZ=Asia/Shanghai
     ulimits:
       memlock:
         soft: -1
@@ -33,6 +34,7 @@ services:
     depends_on:
       - elasticsearch
     environment:
+      - TZ=Asia/Shanghai
       - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
       - ELASTICSEARCH_USERNAME=kibana_system
       - ELASTICSEARCH_PASSWORD=
@@ -51,6 +53,8 @@ services:
     networks:
       - wechat-rag
     command: redis-server --appendonly yes
+    environment:
+      - TZ=Asia/Shanghai
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
@@ -68,6 +72,7 @@ services:
     env_file:
       - .env
     environment:
+      - TZ=Asia/Shanghai
       - SPRING_PROFILES_ACTIVE=docker
       - SPRING_DATA_REDIS_HOST=redis
       - RAG_VECTOR_STORE_URL=http://elasticsearch:9200
