@@ -46,3 +46,6 @@ rag:
     provider: elasticsearch
     url: http://localhost:9200
     collection-name: wechat_chatlog
+  datasync:
+    schedule:
+      enabled: true
