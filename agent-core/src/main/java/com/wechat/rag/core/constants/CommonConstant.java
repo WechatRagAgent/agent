@@ -1,7 +1,11 @@
 package com.wechat.rag.core.constants;
 
+import java.util.regex.Pattern;
+
 public class CommonConstant {
     public static final String OPENROUTER_API_BASE_URL = "https://openrouter.ai/api/v1";
+
+    public static final Pattern CONTEXT_PATTERN = Pattern.compile("\\[CONTEXT\\](.*?)\\[/CONTEXT\\]\\n?", Pattern.DOTALL);
 
     /**
      * 解析LLM模型 默认参数

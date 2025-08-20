@@ -3,6 +3,7 @@ package com.wechat.rag.core.agent.query;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.wechat.rag.core.constants.CommonConstant;
 import com.wechat.rag.datasync.chatlog.ChatlogApi;
 import com.wechat.rag.datasync.chatlog.response.ChatRoomResponse;
 import dev.langchain4j.model.chat.ChatModel;
@@ -48,9 +49,6 @@ public class QueryParser {
         this.wechatParseModel = wechatParseModel;
     }
 
-    // 用于匹配前端上下文的正则表达式
-    private static final Pattern CONTEXT_PATTERN = Pattern.compile("\\[CONTEXT\\](.*?)\\[/CONTEXT\\]\\n?", Pattern.DOTALL);
-
     private final String PARSING_PROMPT_TEMPLATE = """
             ### 角色
             你是一个智能查询分析器。你的任务是将用户的自然语言问题转换成一个结构化的JSON对象，用于后续的数据库检索。
@@ -93,7 +91,7 @@ public class QueryParser {
         String userQuery = query;
 
         // 1. 解析前端传来的结构化上下文
-        Matcher contextMatcher = CONTEXT_PATTERN.matcher(query);
+        Matcher contextMatcher = CommonConstant.CONTEXT_PATTERN.matcher(query);
         if (contextMatcher.find()) {
             String contextJson = contextMatcher.group(1);
             // 从查询中移除上下文，得到干净的用户问题
